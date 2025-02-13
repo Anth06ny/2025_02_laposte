@@ -1,5 +1,10 @@
 package com.amonteiro.a2025_02_laposte
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+
 
 class MyLiveData<T>(value:T) {
     var value:T = value
@@ -17,14 +22,15 @@ class MyLiveData<T>(value:T) {
 
 
 
-fun main() {
+fun main() = runBlocking {
 
-    exo3()
 }
 
 data class PersonBean(var name:String, var note:Int)
 
-fun exo3(){
+suspend fun exo3(){
+
+
     val list = arrayListOf(PersonBean ("toto", 16),
         PersonBean ("Tata", 20),
         PersonBean ("Toto", 8),

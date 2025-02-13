@@ -1,21 +1,31 @@
 package com.amonteiro.a2025_02_laposte.model
 
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
 const val URL_API_WEATHER =
     "https://api.openweathermap.org/data/2.5/find?q=%s&appid=b80967f0a6bd10d23e44848547b26550&units=metric&lang=fr"
 
-fun main() {
-    print("Donner un nom de ville : ")
-    val list = WeatherRepository.loadWeathers("Nice")
-    //val list = WeatherRepository.loadWeathersFake("Nice")
-    for(w in list){
-        println("Il fait ${w.main.temp}° à ${w.name}(id=${w.id}) avec un vent de ${w.wind.speed} m/s\n")
-        println("-Description : ${w.weather.getOrNull(0)?.description}")
-        println("-Icon : ${w.weather.getOrNull(0)?.icon}")
+fun main() = runBlocking {
+//    val list = WeatherRepository.loadWeathers("Nice")
+//    //val list = WeatherRepository.loadWeathersFake("Nice")
+//    for(w in list){
+//        println("Il fait ${w.main.temp}° à ${w.name}(id=${w.id}) avec un vent de ${w.wind.speed} m/s\n")
+//        println("-Description : ${w.weather.getOrNull(0)?.description}")
+//        println("-Icon : ${w.weather.getOrNull(0)?.icon}")
+//    }
+
+    val flow = WeatherRepository.getWeathers("Nice", "Paris")
+
+    flow.filter { it.wind.speed > 0 }.collect{
+        println(it)
     }
+
 }
 
 object WeatherRepository {
@@ -26,7 +36,17 @@ object WeatherRepository {
 
     fun loadWeathers(city: String): List<WeatherBean> {
         val json = sendGet(URL_API_WEATHER.format(city))
+        //delay(3000)
         return gson.fromJson(json, WeatherAroundBean::class.java).list
+    }
+
+    fun getWeathers(vararg cities:String) = flow<WeatherBean> {
+        cities.forEach { cityName->
+            loadWeathers(cityName).forEach {
+                emit(it)
+            }
+            delay(1000)
+        }
     }
 
     fun loadWeathersFake(city: String): List<WeatherBean> {
