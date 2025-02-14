@@ -24,6 +24,10 @@ class MyLiveData<T>(value:T) {
 
 fun main() = runBlocking {
 
+    var toto : String? = "null"
+
+    toto.equals("")
+
 }
 
 data class PersonBean(var name:String, var note:Int)

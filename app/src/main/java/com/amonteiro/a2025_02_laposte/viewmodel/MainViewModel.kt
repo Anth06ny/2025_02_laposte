@@ -38,9 +38,6 @@ class MainViewModel(private val dispatcher: CoroutineDispatcher = Dispatchers.IO
     val runInProgress = MutableStateFlow(false)
     val errorMessage = MutableStateFlow("")
 
-    init {//Création d'un jeu de donnée au démarrage
-        loadFakeData()
-    }
 
     fun loadFakeData(runInProgress :Boolean = false, errorMessage:String = "" ) {
         this.runInProgress.value = runInProgress

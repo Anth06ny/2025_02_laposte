@@ -1,7 +1,10 @@
 package com.amonteiro.a2025_02_laposte.ui.screens
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,27 +19,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.amonteiro.a2025_02_laposte.R
+import com.amonteiro.a2025_02_laposte.ui.Routes
 import com.amonteiro.a2025_02_laposte.ui.theme._2025_02_laposteTheme
 import com.amonteiro.a2025_02_laposte.viewmodel.MainViewModel
 import com.amonteiro.a2025_02_laposte.viewmodel.PictureBean
@@ -52,29 +59,46 @@ fun SearchScreenPreview() {
     //Utilisé par exemple dans MainActivity.kt sous setContent {...}
     _2025_02_laposteTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            SearchScreen(modifier = Modifier.padding(innerPadding))
+            val viewmodel = MainViewModel()
+            viewmodel.loadFakeData(true, "Une erreur")
+            SearchScreen(modifier = Modifier.padding(innerPadding), mainViewModel = viewmodel)
         }
     }
 }
 
 @Composable
-fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = MainViewModel()) {
+fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = viewModel(), navHostController: NavHostController? = null) {
 
-    Column (modifier= modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
 
-        SearchBar()
 
-        val list = mainViewModel.dataList.collectAsStateWithLifecycle().value
+    Column(modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+
+        var searchText by remember { mutableStateOf("") }
+        val list by mainViewModel.dataList.collectAsStateWithLifecycle() //.filter { it.title.contains(searchText, true) }
+        val runInProgress by mainViewModel.runInProgress.collectAsStateWithLifecycle()
+        val errorMessage by mainViewModel.errorMessage.collectAsStateWithLifecycle()
+
+        SearchBar(text = searchText){
+            searchText = it
+        }
+
+        MyError(errorMessage =  errorMessage)
+
+        AnimatedVisibility(visible = runInProgress){
+            CircularProgressIndicator()
+        }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(156f)) {
             items(list.size) {
-                PictureRowItem(data = list[it])
+                PictureRowItem(data = list[it]) {
+                    navHostController?.navigate(Routes.DetailScreen.withObject(list[it]))
+                }
             }
         }
 
         Row {
             Button(
-                onClick = { /* Do something! */ },
+                onClick = {searchText = "" },
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding
             ) {
                 Icon(
@@ -87,7 +111,7 @@ fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = M
             }
 
             Button(
-                onClick = { /* Do something! */ },
+                onClick = { mainViewModel.loadWeathers(searchText) },
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding
             ) {
                 Icon(
@@ -103,11 +127,12 @@ fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = M
 }
 
 @Composable
-fun SearchBar(modifier : Modifier = Modifier){
-    var search = ""
+fun SearchBar(modifier: Modifier = Modifier,text:String, onValueChange: (String) -> Unit) {
+
+
     TextField(
-        value = "", //Valeur affichée
-        onValueChange = {newValue:String -> }, //Nouveau texte entrée
+        value = text, //Valeur affichée
+        onValueChange = onValueChange, //Nouveau texte entrée
         leadingIcon = { //Image d'icone
             Icon(
                 imageVector = Icons.Default.Search,
@@ -136,10 +161,15 @@ fun SearchBar(modifier : Modifier = Modifier){
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable //Composable affichant 1 PictureBean
-fun PictureRowItem(modifier: Modifier = Modifier, data: PictureBean) {
-    Row (modifier = modifier
-        .background(MaterialTheme.colorScheme.onTertiary)
-        .fillMaxWidth()) {
+fun PictureRowItem(modifier: Modifier = Modifier, data: PictureBean, onPictureClick: () -> Unit) {
+
+    var expended by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.onTertiary)
+            .fillMaxWidth()
+    ) {
 
         //Permission Internet nécessaire
         GlideImage(
@@ -157,15 +187,41 @@ fun PictureRowItem(modifier: Modifier = Modifier, data: PictureBean) {
             modifier = Modifier
                 .heightIn(max = 100.dp) //Sans hauteur il prendra tous l'écran
                 .widthIn(max = 100.dp)
+                .clickable(onClick = onPictureClick)
         )
 
-        Column {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                expended = !expended
+            }) {
+
             Text(text = data.title, style = MaterialTheme.typography.titleLarge)
-            Text(text = data.longText.take(20) + "...",
+            Text(
+                text = if (expended) data.longText else (data.longText.take(20) + "..."),
                 style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.tertiary)
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.animateContentSize()
+            )
         }
     }
 
+}
+
+//Le composant est réutilisable avec n'importe quelle chaine de caractère
+@Composable
+fun MyError(
+    modifier: Modifier = Modifier,
+    errorMessage: String? = null
+) {
+    //permet d'afficher / masquer l'erreur avec une animation
+    AnimatedVisibility(!errorMessage.isNullOrBlank()) {
+        Text(
+            text = errorMessage ?: "",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onError,
+            modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.error)
+        )
+    }
 }
 
