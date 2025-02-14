@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">2025_02_laposte</string>
+    <string name="clear_data">Clear data</string>
+    <string name="load_data">Load data</string>
 </resources>
