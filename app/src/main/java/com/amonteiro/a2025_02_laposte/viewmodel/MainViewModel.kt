@@ -3,6 +3,7 @@ package com.amonteiro.a2025_02_laposte.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.amonteiro.a2025_02_laposte.model.WeatherRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,7 @@ fun main() = runBlocking {
 
 data class PictureBean(val id: Int, val url: String, val title: String, val longText: String)
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val dispatcher: CoroutineDispatcher = Dispatchers.IO) : ViewModel() {
     //MutableStateFlow est une donnée observable
     val dataList = MutableStateFlow(emptyList<PictureBean>())
     val runInProgress = MutableStateFlow(false)
@@ -37,7 +38,7 @@ class MainViewModel : ViewModel() {
         runInProgress.value = true
 
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatcher) {
             try {
                 dataList.value = WeatherRepository.loadWeathers(cityName).map {
                     PictureBean(

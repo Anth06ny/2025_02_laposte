@@ -41,6 +41,10 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:+")
     implementation("com.google.code.gson:gson:+")
 
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.+")
+    testImplementation("io.mockk:mockk:1.+")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
