@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
+import com.amonteiro.a2025_02_laposte.ui.screens.SearchScreen
 import com.amonteiro.a2025_02_laposte.ui.theme._2025_02_laposteTheme
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -27,36 +28,11 @@ class MainActivity : ComponentActivity() {
             _2025_02_laposteTheme {
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "From onCreate",
+                    SearchScreen(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier,
-        color = Color.Blue
-    )
-}
-
-@Preview(
-    showBackground = true,
-    widthDp = 320,
-    uiMode = UI_MODE_NIGHT_YES,
-    name = "Dark",
-    showSystemUi = true
-)
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-fun GreetingPreview() {
-    _2025_02_laposteTheme {
-        Greeting("From Preview")
     }
 }
